@@ -19,8 +19,23 @@ namespace slapdash_di
 				.RegisterService<InterfaceB, ConcreteB>(ServiceType.Singleton);
 
 
-			var provider = collection.
+			var provider = collection.GetProvider();
 
+			var interfaceA = provider.GetService<InterfaceA>();
+			var again = provider.GetService<InterfaceA>();
+
+			Console.WriteLine(interfaceA.GetId());
+			Console.WriteLine(again.GetId());
+
+			var singleton = provider.GetService<InterfaceB>();
+
+			var newProvider = collection.GetProvider();
+
+			var sameSingleton = newProvider.GetService<InterfaceB>();
+
+			Console.WriteLine($"Singletons from different provider instances are the same:");
+			Console.WriteLine($"First: {singleton.GetId()}");
+			Console.WriteLine($"Second: {sameSingleton.GetId()}");
 		}
 
 
@@ -128,6 +143,7 @@ namespace slapdash_di
 			throw new ServiceRegistryException($"Unable to locate registration for {typeof(TInterface)}");
 		}
 
+
 		public ServiceProvider GetProvider()
 		{
 			return new ServiceProvider(this);
@@ -159,10 +175,16 @@ namespace slapdash_di
 
 			if (serviceType == ServiceType.Scoped)
 			{
-				_instantiatedScoped.TryAdd(requestedType, services as List<object>);
+				_instantiatedScoped.TryAdd(requestedType, services.Select(x=>(object)x).ToList());
 			}
 
 			return services;
+		}
+
+		
+		public TInterface GetService<TInterface>()
+		{
+			return GetServices<TInterface>().First();
 		}
 	}
 
